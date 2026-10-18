@@ -1,4 +1,5 @@
-from src.preprocessing.chunking import ChunkIng
+from src.preprocessing.chunking import ChunkIng, DOCMetadata
+from dataclasses import asdict
 from src.preprocessing.cleaning import TextCleaning
 import pymupdf
 from src.storage import chromadb
@@ -6,10 +7,13 @@ import uuid
 import os
 from config import ENV
 from src.model.EmbeddingModel import Model_EMB
-
+from src.model.RerankerModel import Model_Reranker
+from src.model.GenerationModel import Model_Generation
 
 
 embd = Model_EMB(ENV.model_embd.model,ENV.model_embd.path)
+rerank = Model_Reranker(ENV.model_rerank.model,ENV.model_rerank.path)
+llm = Model_Generation(ENV.model_generation.model,ENV.model_generation.path)
 db = chromadb.VecDB()
 
 
@@ -38,8 +42,7 @@ def add_to_vecdb(path:str,collection:str|None = None)->None:
                 id=str(uuid.uuid4()),
                 embedding=embedding,
                 metadata=chromadb.EmbeddingMetadata(
-                    doc_name=tail,
-                    doc_metadata=md
+                    **asdict(DOCMetadata(tail,md))
                 ),
                 document=txtchunk
             ))
@@ -55,3 +58,6 @@ def querytodb(query:str,n_results:int):
         include=["metadatas","documents"],
         n_results=n_results
     ))
+
+reranking = rerank.rank
+generation = llm.generate

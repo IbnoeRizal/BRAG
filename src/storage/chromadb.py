@@ -3,7 +3,7 @@ import chromadb
 from config import ENV
 from dataclasses import dataclass,asdict
 from numpy import ndarray
-from src.preprocessing.chunking import Metadata
+from src.preprocessing.chunking import Metadata, DOCMetadata
 from typing import Literal
 
 @dataclass
@@ -66,10 +66,27 @@ class VecDB:
             raise ValueError(f"collection is {self.collection}","you need to call createcollection method first")      
         self.collection.add(**DataToDB.to_chroma(data))
         
-    def getcollection(self,limit:int=10,skip:int=0):
+    def getcollection(self,limit:int | None =10,skip:int | None=0):
         return [c.name for c in self.client.list_collections(limit=limit,offset=skip)]
+    
     def query_data(self,query:QueryToDB):
         if self.collection is None:
            raise ValueError(f"collection is {self.collection}","you need to call createcollection method first")
         
         return self.collection.query(**asdict(query))
+    
+    def delete_collection(self,name:str)->bool:
+        if self.collection is None:
+            return False
+             
+        collection_names = set(self.getcollection(limit=None))
+        if name not in collection_names:
+            return False
+        self.client.delete_collection(name)
+        return True
+    
+    def delete_data(self,where:DOCMetadata):
+        if self.collection is None:
+            return
+        res = {k: v for k, v in asdict(where).items() if v is not None}
+        self.collection.delete(where=res)

@@ -10,6 +10,11 @@ class Metadata:
     page_end:int
     line_end:int
 
+@dataclass
+class DOCMetadata:
+    doc_name:str|None
+    doc_metadata:Metadata|None
+
 class ChunkIng:
     model: SentenceTransformer | None
 
