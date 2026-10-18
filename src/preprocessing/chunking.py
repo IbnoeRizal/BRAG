@@ -16,22 +16,17 @@ class DOCMetadata:
     doc_metadata:Metadata|None
 
 class ChunkIng:
-    model: SentenceTransformer | None
+    model: SentenceTransformer | None = None
 
     def __init__(self,doc:list[list[str]],model:SentenceTransformer) -> None:
         self.pages = doc
         self.l_md: list[Metadata] = []
-        ChunkIng._instantiatemodel(model)
+        self.model = model
 
-    @classmethod
-    def _instantiatemodel(cls,model:SentenceTransformer):
-        if cls.model is None:
-            cls.model = model
-            
 
     def semantic_chunking(self, cut_percent: float = 20):
-        if ChunkIng.model is None:
-            raise RuntimeError(f"model status {ChunkIng.model}")
+        if self.model is None:
+            raise RuntimeError(f"model status {self.model}")
 
         self.l_md = []
 
@@ -39,7 +34,7 @@ class ChunkIng:
         vecs, positions = [], []
         for idx, page in enumerate(self.pages):
             batch = [f"passage: {t}" for t in page]
-            emb = ChunkIng.model.encode(batch, normalize_embeddings=True)
+            emb = self.model.encode(batch, normalize_embeddings=True)
             for i in range(len(emb)):
                 vecs.append(emb[i])
                 positions.append((idx, i))
